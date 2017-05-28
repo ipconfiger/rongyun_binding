@@ -19,8 +19,6 @@
         
     Base = declarative_base(cls=DeclaredBase)
     
-    主要是下面两行, 上面的都是你自己项目的, 也许会有很大区别
-    
     from rongyun_binding import RongService, bind_models
     
     bind_models(Base, db)

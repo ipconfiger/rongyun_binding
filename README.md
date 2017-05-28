@@ -11,12 +11,18 @@
 ## 2. 注入Sqlalchemy的环境
 
     engine = create_engine('postgresql+psycopg2://xxx:@localhost/rongbing', convert_unicode=True, echo=True)
+    
     db = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+    
     class DeclaredBase(object):
         id = Column(Integer, primary_key=True, autoincrement=True)
+        
     Base = declarative_base(cls=DeclaredBase)
+    
     #主要是下面两行, 上面的都是你自己项目的, 也许会有很大区别
+    
     from rongyun_binding import RongService, bind_models
+    
     bind_models(Base, db)
     
 ## 3. 初始化service, 注入融云app_key和app_secret

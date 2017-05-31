@@ -4,7 +4,7 @@ __author__ = 'liming'
 from setuptools import setup
 
 setup(name='rongyun_binding',
-      version='0.0.1',
+      version='0.0.2',
       description='Integrate instant messaging services into your system',
       url='https://github.com/ipconfiger/rongyun_binding',
       author='Alexander.Li',

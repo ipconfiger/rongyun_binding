@@ -31,21 +31,6 @@ def bind_models(Base, db_session):
 class RongService(object):
     def __init__(self, api_key, api_sec):
         self.rcloud = RongCloud(api_key, api_sec)
-
-    def last_token(self, account_type, account_id):
-        """
-        獲取最新的一個token
-        :param account_type: 
-        :type account_type: 
-        :param account_id: 
-        :type account_id: 
-        :return: 
-        :rtype: 
-        """
-        devicebinding = session.query(Binding).filter(Binding.account_type == account_type,
-                                                      Binding.account_id == account_id,
-                                                      ).order_by(Binding.last_update.desc()).first()
-        return devicebinding.rong_id, devicebinding.rong_token
         
 
     def update_token(self, account_type, account_id, device_token, user_name='', avatar='', force_update=False):
@@ -61,6 +46,19 @@ class RongService(object):
         :rtype: 
         """
         need_update = False
+
+        # 先获取最新的绑定记录
+        devicebinding = session.query(Binding).filter(Binding.account_type == account_type,
+                                                      Binding.account_id == account_id,
+                                                      ).order_by(Binding.last_update.desc()).first()
+        if devicebinding.device_token == device_token:
+            # 如果就是这个设备就直接返回
+            if force_update:
+                self.fetch_token_from_rongyun(avatar, devicebinding, user_name)
+            return devicebinding.rong_id, devicebinding.rong_token
+            
+
+
         devicebinding = session.query(Binding).filter(Binding.account_type == account_type,
                                              Binding.account_id == account_id,
                                              Binding.device_token == device_token).first()
@@ -73,20 +71,19 @@ class RongService(object):
             )
             session.add(devicebinding)
             session.flush()
-            need_update = True
 
-        if force_update:
-            need_update = True
-            
-        if need_update:
-            response = self.rcloud.User.getToken(userId=devicebinding.rong_id, name=user_name,
-                                                portraitUri=avatar)
-            result = response.get()
-            assert result['code'] == 200, u"获取融云token失败"
-            devicebinding.rong_token = result['token']
-            devicebinding.last_update = int(time.time())
-            session.flush()
+        self.fetch_token_from_rongyun(avatar, devicebinding, user_name)
         return devicebinding.rong_id, devicebinding.rong_token
+
+
+    def fetch_token_from_rongyun (self, avatar, devicebinding, user_name):
+        response = self.rcloud.User.getToken(userId=devicebinding.rong_id, name=user_name,
+                                             portraitUri=avatar)
+        result = response.get()
+        assert result ['code'] == 200, u"获取融云token失败"
+        devicebinding.rong_token = result ['token']
+        devicebinding.last_update = int(time.time())
+        session.flush()
 
         
             

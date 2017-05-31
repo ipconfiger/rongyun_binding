@@ -1,7 +1,8 @@
 # coding=utf8
+import time
 from singleton import singleton
 from rongcloud import RongCloud
-from sqlalchemy import Column, Integer, String, UniqueConstraint
+from sqlalchemy import Column, Integer, String, UniqueConstraint, Index
 
 Binding = object
 session = None
@@ -14,10 +15,12 @@ def bind_models(Base, db_session):
         device_token = Column(String(100))
         rong_id = Column(String(64))
         rong_token = Column(String(100))
+        last_update = Column(Integer)
         __tablename__ = 'device_binding'
         __table_args__ = (
             UniqueConstraint('account_type', 'account_id', 'device_token',
                              name="acc_type_acc_id_dt_idx_unique"),
+            Index('device_binding_query_idx', 'account_type', 'account_id', 'last_update')
         )
     global Binding, session
     Binding = DeviceBinding
@@ -28,6 +31,22 @@ def bind_models(Base, db_session):
 class RongService(object):
     def __init__(self, api_key, api_sec):
         self.rcloud = RongCloud(api_key, api_sec)
+
+    def last_token(self, account_type, account_id):
+        """
+        獲取最新的一個token
+        :param account_type: 
+        :type account_type: 
+        :param account_id: 
+        :type account_id: 
+        :return: 
+        :rtype: 
+        """
+        devicebinding = session.query(Binding).filter(Binding.account_type == account_type,
+                                                      Binding.account_id == account_id,
+                                                      ).order_by(Binding.last_update.desc()).first()
+        return devicebinding.rong_id, devicebinding.rong_token
+        
 
     def update_token(self, account_type, account_id, device_token, user_name='', avatar='', force_update=False):
         """
@@ -65,6 +84,7 @@ class RongService(object):
             result = response.get()
             assert result['code'] == 200, u"获取融云token失败"
             devicebinding.rong_token = result['token']
+            devicebinding.last_update = int(time.time())
             session.flush()
         return devicebinding.rong_id, devicebinding.rong_token
 

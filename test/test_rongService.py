@@ -21,7 +21,7 @@ class TestRongService(TestCase):
         bind_models(Base, db)
         Base.metadata.create_all(engine)
 
-        RongService.initialize('key', 'sec')
+        RongService.initialize('0vnjpoad0c1iz', 'WaoOjj3RmebDBr')
 
         rong_id, rong_token = RongService.instance().update_token(1, 233, '123123', user_name="test123123")
         self.assertTrue(True)

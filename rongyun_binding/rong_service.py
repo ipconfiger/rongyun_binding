@@ -51,13 +51,12 @@ class RongService(object):
         devicebinding = session.query(Binding).filter(Binding.account_type == account_type,
                                                       Binding.account_id == account_id,
                                                       ).order_by(Binding.last_update.desc()).first()
-        if devicebinding.device_token == device_token:
-            # 如果就是这个设备就直接返回
-            if force_update:
-                self.fetch_token_from_rongyun(avatar, devicebinding, user_name)
-            return devicebinding.rong_id, devicebinding.rong_token
-            
-
+        if devicebinding:
+            if devicebinding.device_token == device_token:
+                # 如果就是这个设备就直接返回
+                if force_update:
+                    self.fetch_token_from_rongyun(avatar, devicebinding, user_name)
+                return devicebinding.rong_id, devicebinding.rong_token
 
         devicebinding = session.query(Binding).filter(Binding.account_type == account_type,
                                              Binding.account_id == account_id,
